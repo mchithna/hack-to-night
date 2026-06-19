@@ -12,10 +12,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Force light mode for banking app — no dark mode color shifts */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #171717;
   }
 }
 
@@ -25,11 +26,207 @@ body {
   font-family: var(--font-bai, 'Bai Jamjuree'), Arial, Helvetica, sans-serif;
 }
 
-:root{
-  --sidebar-purple: rgba(58,6,59,0.83); /* #3A063B at 83% */
+/* ==============================
+   ANIMATION KEYFRAMES
+   ============================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-32px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(32px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+@keyframes donutDraw {
+  from { stroke-dashoffset: var(--circumference, 283); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(154, 92, 151, 0.4); }
+  50% { box-shadow: 0 0 20px 4px rgba(154, 92, 151, 0.15); }
+}
+
+/* ==============================
+   ANIMATION UTILITY CLASSES
+   ============================== */
+
+.animate-fade-in { animation: fadeIn 0.5s ease-out both; }
+.animate-fade-in-up { animation: fadeInUp 0.6s ease-out both; }
+.animate-fade-in-down { animation: fadeInDown 0.5s ease-out both; }
+.animate-slide-left { animation: slideInLeft 0.5s ease-out both; }
+.animate-slide-right { animation: slideInRight 0.5s ease-out both; }
+.animate-scale-in { animation: scaleIn 0.4s ease-out both; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+
+/* Skeleton shimmer */
+.skeleton {
+  animation: shimmer 1.5s infinite;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+}
+
+/* Progress bar fill animation */
+.animate-progress {
+  animation: progressFill 1s ease-out both;
+}
+
+/* ==============================
+   GLOBAL DESIGN TOKENS
+   ============================== */
+
+:root {
+  --sidebar-purple: rgba(58,6,59,0.83);
   --sidebar-accent: #b886b6;
   --card-bg: #ffffff;
   --bg-light: #f3f2f2;
+
+  /* Colors from Accounts */
+  --color-primary: #450043;
+  --color-primary-hover: #5a0058;
+  --color-primary-light: rgba(69, 0, 67, 0.1);
+  --color-secondary: #2563eb;
+  --color-secondary-hover: #1d4ed8;
+  --color-secondary-light: rgba(37, 99, 235, 0.3);
+  
+  --color-background: #f1f1f1;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-text: #374151;
+  --color-text-light: #6b7280;
+  --color-text-muted: #9ca3af;
+  
+  --color-border: #e5e7eb;
+  --color-border-light: #f0f0f0;
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-shadow-hover: rgba(0, 0, 0, 0.2);
+  
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-error-light: rgba(239, 68, 68, 0.1);
+  
+  --color-avatar-bg: #93c5fd;
+  --color-card-border: #3b82f6;
+  --color-hover-bg: #f0f0f0;
+  --color-delete-hover: #fee2e2;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --spacing-2xl: 2rem;
+  --spacing-3xl: 2.5rem;
+  
+  /* Border Radius */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 25px;
+  --radius-full: 50%;
+  
+  /* Font Sizes */
+  --font-xs: 10px;
+  --font-sm: 12px;
+  --font-md: 14px;
+  --font-lg: 16px;
+  --font-xl: 18px;
+  --font-2xl: 20px;
+  --font-3xl: 22px;
+  --font-4xl: 28px;
+  
+  /* Transitions */
+  --transition-default: all 0.3s ease;
+  
+  /* Layout */
+  --card-width: 520px;
+  --card-height: 190px;
+  --form-width: 650px;
+  --avatar-size: 40px;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  :root {
+    --card-width: 100%;
+    --card-height: 160px;
+    --form-width: 100%;
+    --font-4xl: 22px;
+    --font-3xl: 20px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  :root {
+    --card-height: 150px;
+    --avatar-size: 35px;
+    --font-4xl: 20px;
+    --font-xl: 16px;
+    --font-3xl: 18px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 360px) {
+  :root {
+    --card-height: 130px;
+    --font-xl: 14px;
+    --font-md: 12px;
+  }
+}
+
+/* Large Screens */
+@media (min-width: 1200px) {
+  :root {
+    --card-width: 580px;
+    --card-height: 200px;
+    --form-width: 700px;
+  }
 }
 
 .font-geist{font-family: var(--font-bai, 'Bai Jamjuree'), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
@@ -37,6 +234,10 @@ body {
 .bg-bg-light{background-color:var(--bg-light)}
 .bg-sidebar-purple{background:var(--sidebar-purple);border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.12)}
 .text-sidebar-purple{color:var(--sidebar-purple)}
+
+/* ==============================
+   TRANSFER / CARD STYLES
+   ============================== */
 
 .transfer-card{
   background: var(--card-bg);
@@ -49,6 +250,7 @@ body {
   max-height: none;
   overflow: visible;
   border: 1px solid rgba(0,0,0,0.04);
+  animation: fadeInUp 0.6s ease-out both;
 }
 
 .underline-input{
@@ -58,6 +260,7 @@ body {
   padding:8px 4px;
   outline:none;
   font-size:16px;
+  transition: border-color 0.3s ease;
 }
 .underline-input:focus{border-bottom-color:var(--sidebar-accent)}
 
@@ -66,6 +269,7 @@ body {
   border:1px solid #cfcfcf;
   padding:8px;
   border-radius:2px;
+  transition: border-color 0.3s ease;
 }
 
 .next-btn{
@@ -76,9 +280,22 @@ body {
   font-weight:700;
   box-shadow: 0 8px 18px rgba(90,39,64,0.2);
   border:none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(90,39,64,0.3);
+}
+.next-btn:active {
+  transform: translateY(0);
 }
 
-.sidebar-item{padding:14px 18px;border-radius:12px;color:rgba(255,255,255,0.95);transition:all 200ms cubic-bezier(.2,.9,.2,1);display:flex;align-items:center;gap:14px;text-transform:uppercase;font-weight:600;letter-spacing:1px}
+/* ==============================
+   SIDEBAR STYLES
+   ============================== */
+
+.sidebar-item{padding:14px 18px;border-radius:12px;color:rgba(255,255,255,0.95);transition:all 300ms cubic-bezier(.2,.9,.2,1);display:flex;align-items:center;gap:14px;text-transform:uppercase;font-weight:600;letter-spacing:1px}
 .sidebar-item:hover{background:rgba(255,255,255,0.03);transform:translateY(-3px)}
 .sidebar-item .sidebar-icon{width:44px;height:44px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;background:transparent}
 .sidebar-item.active{background: linear-gradient(180deg, rgba(196,150,185,0.95), rgba(169,111,150,0.95));font-weight:900;color:#ffffff;box-shadow: 0 20px 40px rgba(58,6,59,0.35), inset 0 -6px 0 rgba(255,255,255,0.06);transform:translateY(-6px);padding-left:20px;padding-right:28px}
@@ -87,7 +304,7 @@ body {
 .icon-btn{background:rgba(255,255,255,0.04);border:none;color:white;font-size:18px;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%}
 .icon-btn svg{width:20px;height:20px;display:block;fill:currentColor;stroke:currentColor}
 
-/* Ensure form labels and inputs inside the transfer card are dark/visible */
+/* Force dark text inside transfer cards */
 .transfer-card label,
 .transfer-card input,
 .transfer-card select,
@@ -95,55 +312,59 @@ body {
 .underline-input,
 .description-box{color:#000}
 
-/* Ensure all text inside transfer/confirm cards is black and highly visible */
 .transfer-card,
 .transfer-card * {
   color: #000 !important;
 }
 
-/* Ensure transfer buttons remain white even when global card text is forced black */
 .transfer-card .next-btn,
 .transfer-card .transfer-btn {
   color: #fff !important;
   text-shadow: 0 2px 0 rgba(0,0,0,0.12);
 }
 
-
-/* Allow confirm illustration and inner panel to fully display */
 .transfer-card img{max-width:420px;max-height:340px;width:auto;height:auto}
-
-/* inner confirm panel styling (rounded, elevated) */
 .transfer-card .bg-white{background:#f3f5f6;border-radius:14px;box-shadow:0 20px 40px rgba(12,12,12,0.06);max-width:760px;margin:0 auto;padding:32px}
-
 .transfer-card h3{font-size:26px;font-weight:900;text-align:center;margin-bottom:18px}
-
-/* ensure headings below the overlapping graphic are visible */
 .transfer-card > .relative > h3{margin-top:6px}
 
-/* transfer button variant styled as large pill overlapping panel */
-.transfer-btn{width:420px;height:72px;border-radius:36px;background:linear-gradient(180deg,#b886b6,#9b5f90);color:#fff;font-weight:900;font-size:20px;letter-spacing:2px;box-shadow:0 22px 28px rgba(90,39,64,0.25);border:none;margin-top:24px;display:block;margin-left:auto;margin-right:auto}
+.transfer-btn{width:420px;height:72px;border-radius:36px;background:linear-gradient(180deg,#b886b6,#9b5f90);color:#fff;font-weight:900;font-size:20px;letter-spacing:2px;box-shadow:0 22px 28px rgba(90,39,64,0.25);border:none;margin-top:24px;display:block;margin-left:auto;margin-right:auto;transition:all 0.3s ease;cursor:pointer}
+.transfer-btn:hover{transform:translateY(-2px);box-shadow:0 26px 32px rgba(90,39,64,0.35)}
 .transfer-btn:active{transform:translateY(1px)}
 
-/* slightly adjust generic next button */
 .next-btn{padding:14px 40px}
 
-/* Make main headings clearly visible */
 main h2{color:#000;font-size:28px;font-weight:800}
 
-/* success page specifics */
+/* Success page */
 .success-check{display:flex;align-items:center;justify-content:center;position:absolute;top:-120px;left:50%;transform:translateX(-50%);z-index:40;width:220px;height:220px}
 .success-check svg{display:block;margin:0 auto;width:100%;height:100%}
-.success-btn{width:420px;background:linear-gradient(180deg,#b886b6,#9b5f90);height:64px;border-radius:32px;color:#fff;font-weight:800;font-size:18px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 18px 28px rgba(90,39,64,0.22);border:none;margin-top:28px}
+.success-btn{width:420px;background:linear-gradient(180deg,#b886b6,#9b5f90);height:64px;border-radius:32px;color:#fff;font-weight:800;font-size:18px;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 18px 28px rgba(90,39,64,0.22);border:none;margin-top:28px;transition:all 0.3s ease;cursor:pointer}
+.success-btn:hover{transform:translateY(-2px)}
 .success-btn span{font-size:22px;margin-right:12px}
 
-/* Variant: place the alert/check inside the card flow (no overlap) */
 .success-check.inside-check{position:relative;top:0;left:0;transform:none;margin:20px auto 40px;width:100px;height:100px;z-index:10;display:block}
 .success-check.inside-check svg{width:100%;height:100%}
 
-/* Topbar icons (right side) */
-.topbar-icon{background:transparent;border:none;color:var(--foreground);display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px}
+/* Topbar icons */
+.topbar-icon{background:transparent;border:none;color:var(--foreground);display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;transition:all 0.2s ease;cursor:pointer}
 .topbar-icon svg{width:22px;height:22px;fill:none;stroke:currentColor}
-.topbar-icon:hover{background:rgba(0,0,0,0.04)}
-
-/* Ensure PNG icons inside topbar buttons are sized and centered */
+.topbar-icon:hover{background:rgba(0,0,0,0.04);transform:scale(1.05)}
 .topbar-icon img{width:20px;height:20px;object-fit:contain;display:block}
+
+/* ==============================
+   PREMIUM CARD HOVER EFFECTS
+   ============================== */
+
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+/* Smooth page transitions */
+.page-transition {
+  animation: fadeIn 0.4s ease-out;
+}
