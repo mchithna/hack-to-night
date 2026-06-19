@@ -37,14 +37,28 @@ export async function POST(req: NextRequest) {
 
     const userId = userResult[0].id
 
-    // Generate a random 10-digit account number
-    const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString()
+    // Generate a random 10-digit account number (retry on collision)
+    let accountNumber: string | null = null
 
-    // Create an initial savings account
-    await runQuery(
-      'INSERT INTO accounts (user_id, account_number, account_name, balance, pin) VALUES ($1, $2, $3, $4, $5)',
-      [userId, accountNumber, 'Main Savings', 0, '0000']
-    )
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate = Math.floor(1000000000 + Math.random() * 9000000000).toString()
+      const inserted = await runQuery<{ account_number: string }>(
+        'INSERT INTO accounts (user_id, account_number, account_name, balance) VALUES ($1, $2, $3, $4) ON CONFLICT (account_number) DO NOTHING RETURNING account_number',
+        [userId, candidate, 'Main Savings', 0]
+      )
+
+      if (inserted.length > 0) {
+        accountNumber = inserted[0].account_number
+        break
+      }
+    }
+
+    if (!accountNumber) {
+      return NextResponse.json(
+        { ok: false, message: 'Failed to create account. Please try again.' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ ok: true, message: 'User registered successfully.' })
   } catch (error) {
