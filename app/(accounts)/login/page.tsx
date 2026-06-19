@@ -123,7 +123,7 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <AuthButton className="mt-8" disabled={loading}>
+          <AuthButton type="submit" className="mt-8" disabled={loading}>
             {loading ? 'SIGNING IN...' : 'SIGN IN'}
           </AuthButton>
 
