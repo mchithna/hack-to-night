@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <div className="mt-12 flex justify-center flex-col items-center gap-4">
-            <AuthButton disabled={loading}>
+            <AuthButton type="submit" disabled={loading}>
               {loading ? 'RESETTING...' : 'RESET PASSWORD'}
             </AuthButton>
             
