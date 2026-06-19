@@ -28,18 +28,16 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify password: support both bcrypt hashes and Bun hashes, plus plain text fallback for legacy seeds
+    // Verify password: support bcrypt hashes, argon2 (Bun), and plain text fallback
     let isMatch = false
     if (user.password.startsWith('$2') || user.password.startsWith('$argon2')) {
-      // bcrypt or argon2 hash (Bun.password uses argon2 by default)
       try {
         isMatch = await bcrypt.compare(password, user.password)
       } catch {
-        // If bcrypt can't verify (e.g. argon2 hash), try plain text fallback
+        // If bcrypt can't verify (e.g. argon2 hash from Bun), fall back to plain text
         isMatch = password === user.password
       }
     } else {
-      // Plain text password (legacy seed data)
       isMatch = password === user.password
     }
 

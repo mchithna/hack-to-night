@@ -144,7 +144,7 @@ export default function SignUpPage() {
           </div>
 
           <div className="mt-8 flex justify-center">
-            <AuthButton disabled={loading}>
+            <AuthButton type="submit" disabled={loading}>
               {loading ? 'SIGNING UP...' : 'SIGN UP'}
             </AuthButton>
           </div>
