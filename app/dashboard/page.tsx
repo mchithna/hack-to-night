@@ -1,29 +1,82 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Sidebar from '../../components/sidebar'
 import { Bell, ChevronRight, Search } from '../../components/Icons'
+import { Toaster, toast } from 'react-hot-toast'
 
-const transactions = [
-  {
-    date: 'Oct, 16 2025',
-    account: '......3423',
-    amount: '-Rs. 4500.00'
-  },
-  {
-    date: 'Oct, 16 2025',
-    account: '......4876',
-    amount: '-Rs. 10,000.00'
-  },
-  {
-    date: 'Oct, 16 2025',
-    account: '......6754',
-    amount: '-Rs. 9870.00'
-  }
-]
+type Account = {
+  account_number: string
+  balance: string | number
+  type: string
+}
+
+type Transaction = {
+  id: string
+  created_at: string
+  amount: string | number
+  from_account: string
+  to_account: string
+  status: string
+}
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<{username: string, full_name?: string} | null>(null)
+  const [balance, setBalance] = useState<number>(0)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [payees, setPayees] = useState<{name: string, account: string}[]>([])
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        // Fetch accounts
+        const acctRes = await fetch('/api/accounts')
+        if (acctRes.ok) {
+          const acctData = await acctRes.json()
+          if (acctData.accounts && acctData.accounts.length > 0) {
+            // Assume user details are tied to the first account for now
+            const firstAcc = acctData.accounts[0]
+            setUser({ username: firstAcc.username, full_name: firstAcc.full_name })
+            
+            // Calculate total balance
+            const totalBalance = acctData.accounts.reduce((sum: number, acc: Account) => sum + Number(acc.balance), 0)
+            setBalance(totalBalance)
+
+            // Fetch transactions for the primary account
+            const transRes = await fetch(`/api/transactions?account=${firstAcc.account_number}`)
+            if (transRes.ok) {
+              const transData = await transRes.json()
+              const fetchedTxs = transData.transactions || []
+              setTransactions(fetchedTxs.slice(0, 5)) // show top 5
+
+              // Extract unique payees (transactions where money went OUT to a different account)
+              const uniquePayees = new Map()
+              fetchedTxs.forEach((tx: Transaction) => {
+                if (tx.from_account === firstAcc.account_number && tx.to_account && tx.to_account !== firstAcc.account_number) {
+                  uniquePayees.set(tx.to_account, { name: 'Saved Payee', account: tx.to_account })
+                }
+              })
+              setPayees(Array.from(uniquePayees.values()).slice(0, 4))
+            }
+          }
+        } else {
+          toast.error("Failed to load dashboard data.")
+        }
+      } catch (err) {
+        console.error(err)
+        toast.error("Error loading dashboard")
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
   return (
     <main className="dashboard">
+      <Toaster position="top-right" />
       <Sidebar />
 
       <section className="content">
@@ -40,10 +93,18 @@ export default function Dashboard() {
         {/* Top Section */}
         <div className="top-section">
           <div className="welcome-card">
-            <h2 className="welcome-title">Welcome back, Dilara!</h2>
+            {loading ? (
+              <div className="skeleton h-8 w-1/2 mb-4 mt-3 ml-4 rounded"></div>
+            ) : (
+              <h2 className="welcome-title">Welcome back, {user?.full_name || user?.username || 'User'}!</h2>
+            )}
             <div className="balance-card">
               <p className="balance-label">Current Balance</p>
-              <p className="balance-amount">Rs. 100, 000</p>
+              {loading ? (
+                <div className="skeleton h-6 w-32 mt-2 rounded"></div>
+              ) : (
+                <p className="balance-amount">Rs. {balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              )}
               <ChevronRight className="balance-chevron" size={30} />
             </div>
             <div className="carousel-dots">
@@ -61,15 +122,26 @@ export default function Dashboard() {
           <div className="payees-card">
             <h3 className="payees-title">Saved Payees</h3>
             <div className="payees-list">
-              {[1, 2].map((item) => (
-                <div key={item} className="payee-item">
-                  <img src="/person-logo.png" alt="user" className="avatar" />
-                  <div className="payee-info">
-                    <p>HKDS</p>
-                    <p>Wickramanayake</p>
+              {loading ? (
+                [1, 2].map(i => (
+                  <div key={i} className="flex gap-3 items-center skeleton p-2 rounded">
+                    <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+                    <div className="flex-1 space-y-2"><div className="h-3 bg-gray-300 w-1/2 rounded"></div><div className="h-3 bg-gray-300 w-3/4 rounded"></div></div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : payees.length > 0 ? (
+                payees.map((payee, idx) => (
+                  <div key={idx} className="payee-item">
+                    <img src="/person-logo.png" alt="user" className="avatar" />
+                    <div className="payee-info">
+                      <p>{payee.name}</p>
+                      <p>{payee.account}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm text-center mt-4">No recent payees</p>
+              )}
             </div>
             <div className="view-all">
               View all
@@ -82,15 +154,29 @@ export default function Dashboard() {
         <div className="transactions-section">
           <h2 className="transactions-title">Recent Transactions</h2>
           <div className="transactions-card">
-            {transactions.map((t, index) => (
-              <div key={index} className="transaction-item">
-                <img src="/person-logo.png" alt="user" className="avatar" />
-                <span className="transaction-date">{t.date}</span>
-                <span className="transaction-account">{t.account}</span>
-                <span className="transaction-amount">{t.amount}</span>
-                <span className="transaction-status">Success</span>
-              </div>
-            ))}
+            {loading ? (
+               [1, 2, 3].map(i => (
+                <div key={i} className="transaction-item skeleton p-2 rounded mb-2">
+                  <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+                  <div className="h-4 bg-gray-300 w-1/4 rounded"></div>
+                  <div className="h-4 bg-gray-300 w-1/4 rounded"></div>
+                </div>
+               ))
+            ) : transactions.length > 0 ? (
+              transactions.map((t, index) => (
+                <div key={index} className="transaction-item">
+                  <img src="/person-logo.png" alt="user" className="avatar" />
+                  <span className="transaction-date">{new Date(t.created_at).toLocaleDateString()}</span>
+                  <span className="transaction-account">{t.to_account || t.from_account}</span>
+                  <span className="transaction-amount" style={{color: Number(t.amount) < 0 ? 'red' : 'green'}}>
+                    {Number(t.amount) < 0 ? '-' : '+'}Rs. {Math.abs(Number(t.amount)).toLocaleString(undefined, {minimumFractionDigits:2})}
+                  </span>
+                  <span className="transaction-status">{t.status || 'Success'}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">No transactions found.</p>
+            )}
             <div className="view-all">
               View all
               <ChevronRight size={15} />
@@ -100,6 +186,16 @@ export default function Dashboard() {
       </section>
 
       <style jsx>{`
+        .skeleton {
+          animation: pulse 1.5s infinite;
+          background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+          background-size: 200% 100%;
+        }
+        @keyframes pulse {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+
         .dashboard {
           width: 100vw;
           min-height: 100vh;
