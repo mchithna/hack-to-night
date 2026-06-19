@@ -1,63 +1,89 @@
-import { asText, runStatement, serviceFailure } from '@/lib/platform-db'
+import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcrypt'
+import { SignJWT } from 'jose'
+import { runQuery, serviceFailure } from '@/lib/platform-db'
 
-export async function GET() {
+export async function POST(req: NextRequest) {
   try {
-    const result = await runStatement(
-      'SELECT id, username, password, role, full_name, nic, email FROM users ORDER BY id'
+    const { username, password } = await req.json().catch(() => ({}))
+
+    if (!username || !password) {
+      return NextResponse.json(
+        { ok: false, message: 'Username and password are required.' },
+        { status: 400 }
+      )
+    }
+
+    // Find user using parameterized query
+    const users = await runQuery(
+      'SELECT id, username, password, full_name, role FROM users WHERE username = $1 LIMIT 1',
+      [username]
     )
 
-    return Response.json({
-      ok: true,
-      note: 'Login reference data.',
-      users: result.rows
-    })
-  } catch (reason) {
-    return serviceFailure(reason)
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json().catch(() => ({}))
-    const username = asText(body.username)
-    const password = asText(body.password)
-
-    const sql = `
-      SELECT id, username, role, full_name, email
-      FROM users
-      WHERE username = '${username}' AND password = '${password}'
-      LIMIT 1
-    `
-    const result = await runStatement(sql)
-
-    if (!result.rows[0]) {
-      return Response.json(
-        {
-          ok: false,
-          message: 'Invalid login.',
-          sql
-        },
+    if (users.length === 0) {
+      return NextResponse.json(
+        { ok: false, message: 'Invalid credentials.' },
         { status: 401 }
       )
     }
 
-    const user = result.rows[0]
-    const headers = new Headers()
-    headers.append('set-cookie', `user_id=${user.id}; Path=/; SameSite=Lax`)
-    headers.append('set-cookie', `role=${user.role}; Path=/; SameSite=Lax`)
+    const user = users[0]
 
-    return Response.json(
-      {
-        ok: true,
-        token: Buffer.from(`${user.id}:${user.role}:session-token`).toString(
-          'base64'
-        ),
-        user,
-        sql
-      },
-      { headers }
+    // Verify password, fallback for seed plain text passwords
+    let isMatch = false
+    if (user.password.startsWith('$2b$') || user.password.startsWith('$2a$')) {
+      isMatch = await bcrypt.compare(password, user.password)
+    } else {
+      isMatch = password === user.password
+    }
+
+    if (!isMatch) {
+      return NextResponse.json(
+        { ok: false, message: 'Invalid credentials.' },
+        { status: 401 }
+      )
+    }
+
+    // Create JWT
+    const secret = new TextEncoder().encode(
+      process.env.JWT_SECRET || 'super_secret_jwt_key_for_hackathon'
     )
-  } catch (reason) {
-    return serviceFailure(reason)
+    
+    const alg = 'HS256'
+    
+    const jwt = await new SignJWT({
+      id: user.id,
+      username: user.username,
+      fullName: user.full_name,
+      role: user.role
+    })
+      .setProtectedHeader({ alg })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(secret)
+
+    const response = NextResponse.json({
+      ok: true,
+      message: 'Login successful',
+      user: {
+        id: user.id,
+        username: user.username,
+        fullName: user.full_name,
+        role: user.role
+      }
+    })
+
+    response.cookies.set('auth_token', jwt, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 // 24 hours
+    })
+
+    return response
+
+  } catch (error) {
+    return serviceFailure(error)
   }
 }

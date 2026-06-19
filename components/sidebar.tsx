@@ -93,6 +93,23 @@ const HelpCircle = ({ size = 24 }: IconProps) => (
   </svg>
 )
 
+const LogOut = ({ size = 24 }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+)
+
 export default function Sidebar() {
   const pathname = usePathname()
 
@@ -104,6 +121,16 @@ export default function Sidebar() {
     { label: 'SMART SPEND', path: '/smart-spend' },
     { label: 'E-STATEMENT', path: '/e-statement' }
   ]
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    } catch (e) {
+      console.error('Logout failed', e)
+    }
+  }
 
   return (
     <aside className="sidebar">
@@ -133,6 +160,9 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <Settings size={24} />
         <HelpCircle size={24} />
+        <button onClick={handleLogout} className="logout-button" title="Log Out">
+          <LogOut size={24} />
+        </button>
       </div>
 
       <style jsx>{`
