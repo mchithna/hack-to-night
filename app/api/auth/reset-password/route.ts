@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     // Check if email exists
     const users = await runQuery('SELECT id FROM users WHERE email = $1 LIMIT 1', [email])
-    if (users.length === 0) {
+    if (users.rows.length === 0) {
       // Always return success to avoid email enumeration
       return NextResponse.json({ ok: true, message: 'Password reset successfully.' })
     }

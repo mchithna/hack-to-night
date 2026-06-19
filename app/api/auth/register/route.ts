@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       [username, email]
     )
 
-    if (existingUser.length > 0) {
+    if (existingUser.rows.length > 0) {
       return NextResponse.json(
         { ok: false, message: 'Username or email already exists.' },
         { status: 400 }
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       [username, email, hashedPassword, fullName, 'customer']
     )
 
-    const userId = userResult[0].id
+    const userId = userResult.rows[0].id
 
     // Generate a random 10-digit account number (retry on collision)
     let accountNumber: string | null = null
@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
         [userId, candidate, 'Main Savings', 0]
       )
 
-      if (inserted.length > 0) {
-        accountNumber = inserted[0].account_number
+      if (inserted.rows.length > 0) {
+        accountNumber = inserted.rows[0].account_number
         break
       }
     }

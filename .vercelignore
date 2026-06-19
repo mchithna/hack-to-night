@@ -1,0 +1,36 @@
+# Vercel ignore patterns - files not needed in production
+
+.git
+.gitignore
+.env.example
+.env.local
+.env.production.example
+.dockerignore
+.lefthook.yml
+
+# Docker files (not needed on Vercel)
+Dockerfile
+Dockerfile.prod
+docker-compose.yml
+docker-compose.prod.yml
+nginx.conf
+deploy.sh
+build-prod.sh
+generate-secrets.sh
+DEPLOYMENT.md
+
+# Development files
+node_modules
+.next
+bun.lock
+
+# OS files
+.DS_Store
+.vscode
+.idea
+*.swp
+
+# Logs
+npm-debug.log
+yarn-debug.log
+pnpm-debug.log

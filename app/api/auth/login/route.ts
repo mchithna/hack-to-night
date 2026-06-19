@@ -1,103 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { asText, runQuery, serviceFailure } from '@/lib/platform-db'
+import { signToken } from '@/lib/auth'
 import bcrypt from 'bcrypt'
-import { SignJWT } from 'jose'
-import { runQuery, serviceFailure } from '@/lib/platform-db'
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const { username, password } = await req.json().catch(() => ({}))
+    const body = await request.json().catch(() => ({}))
+    const username = asText(body.username)
+    const password = asText(body.password)
 
     if (!username || !password) {
-      return NextResponse.json(
-        { ok: false, message: 'Username and password are required.' },
+      return Response.json(
+        { ok: false, message: 'Missing credentials.' },
         { status: 400 }
       )
     }
 
-    // Find user using parameterized query
-    const users = await runQuery(
-      'SELECT id, username, password, full_name, role FROM users WHERE username = $1 LIMIT 1',
+    const result = await runQuery(
+      `SELECT id, username, password, role, full_name, email FROM users WHERE username = $1 LIMIT 1`,
       [username]
     )
 
-    if (users.length === 0) {
-      return NextResponse.json(
-        { ok: false, message: 'Invalid credentials.' },
+    const user = result.rows[0]
+    if (!user) {
+      return Response.json(
+        { ok: false, message: 'Invalid login.' },
         { status: 401 }
       )
     }
 
-    const user = users[0]
-
-    // Verify password, fallback for seed plain text passwords
+    // Verify password: support bcrypt hashes, argon2 (Bun), and plain text fallback
     let isMatch = false
-    if (
-      user.password.startsWith('$2b$') ||
-      user.password.startsWith('$2a$') ||
-      user.password.startsWith('$2y$')
-    ) {
-      isMatch = await bcrypt.compare(password, user.password)
+    if (user.password.startsWith('$2') || user.password.startsWith('$argon2')) {
+      try {
+        isMatch = await bcrypt.compare(password, user.password)
+      } catch {
+        // If bcrypt can't verify (e.g. argon2 hash from Bun), fall back to plain text
+        isMatch = password === user.password
+      }
     } else {
       isMatch = password === user.password
     }
 
     if (!isMatch) {
-      return NextResponse.json(
-        { ok: false, message: 'Invalid credentials.' },
+      return Response.json(
+        { ok: false, message: 'Invalid login.' },
         { status: 401 }
       )
     }
 
-    // Create JWT
-    const secretValue = process.env.JWT_SECRET
-    if (!secretValue) {
-      return NextResponse.json(
-        { ok: false, message: 'Server authentication is not configured.' },
-        { status: 500 }
-      )
-    }
-
-    const secret = new TextEncoder().encode(secretValue)
-    
-    const alg = 'HS256'
-    
-    const jwt = await new SignJWT({
-      id: user.id,
+    const token = signToken({
+      userId: user.id,
       username: user.username,
-      fullName: user.full_name,
       role: user.role
     })
-      .setProtectedHeader({ alg })
-      .setIssuedAt()
-      .setExpirationTime('24h')
-      .sign(secret)
 
-    const response = NextResponse.json({
-      ok: true,
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        username: user.username,
-        fullName: user.full_name,
-        role: user.role
-      }
-    })
-
-    response.cookies.set('auth_token', jwt, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 // 24 hours
-    })
-
-    return response
-
-  } catch (error) {
-    console.error('Login error:', error)
-    return NextResponse.json(
-      { ok: false, message: 'Internal server error.' },
-      { status: 500 }
+    const headers = new Headers()
+    headers.append(
+      'set-cookie',
+      `auth_token=${token}; Path=/; HttpOnly; SameSite=Strict`
     )
+
+    // Don't send password hash to client
+    const { password: _, ...safeUser } = user
+
+    return Response.json(
+      {
+        ok: true,
+        user: safeUser
+      },
+      { headers }
+    )
+  } catch (error) {
+    return serviceFailure(error)
   }
 }

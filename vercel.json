@@ -1,0 +1,27 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "env": [
+    {
+      "key": "DATABASE_URL",
+      "description": "PostgreSQL connection string"
+    },
+    {
+      "key": "JWT_SECRET",
+      "description": "Secret key for JWT authentication"
+    },
+    {
+      "key": "NODE_ENV",
+      "value": "production"
+    }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
+}
