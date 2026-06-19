@@ -79,9 +79,9 @@ export default function Dashboard() {
       <Toaster position="top-right" />
       <Sidebar />
 
-      <section className="content">
+      <section className="content page-transition">
         {/* Header */}
-        <header className="content-header">
+        <header className="content-header animate-fade-in-down">
           <h1 className="page-title">Dashboard</h1>
           <div className="header-actions">
             <Search size={24} />
@@ -92,7 +92,7 @@ export default function Dashboard() {
 
         {/* Top Section */}
         <div className="top-section">
-          <div className="welcome-card">
+          <div className="welcome-card animate-fade-in-up stagger-1">
             {loading ? (
               <div className="skeleton h-8 w-1/2 mb-4 mt-3 ml-4 rounded"></div>
             ) : (
@@ -113,13 +113,13 @@ export default function Dashboard() {
               <span className="dot" />
             </div>
             <img
-              src="/dashboard-logo.png"
+              src="/Dashboard-logo.png"
               alt="woman"
               className="welcome-image"
             />
           </div>
 
-          <div className="payees-card">
+          <div className="payees-card animate-fade-in-up stagger-2">
             <h3 className="payees-title">Saved Payees</h3>
             <div className="payees-list">
               {loading ? (
@@ -153,7 +153,7 @@ export default function Dashboard() {
         {/* Transactions */}
         <div className="transactions-section">
           <h2 className="transactions-title">Recent Transactions</h2>
-          <div className="transactions-card">
+          <div className="transactions-card animate-fade-in-up stagger-3">
             {loading ? (
                [1, 2, 3].map(i => (
                 <div key={i} className="transaction-item skeleton p-2 rounded mb-2">
