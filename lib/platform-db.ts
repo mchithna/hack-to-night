@@ -1,4 +1,5 @@
 import { Pool } from 'pg'
+import bcrypt from 'bcrypt'
 
 const connectionString =
   process.env.DATABASE_URL ||
@@ -51,12 +52,10 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 `
 
-// @ts-ignore
-const dilaraHash = Bun.password.hashSync('password123')
-// @ts-ignore
-const kasunHash = Bun.password.hashSync('kasun')
-// @ts-ignore
-const adminHash = Bun.password.hashSync('admin')
+// Hash passwords using bcrypt (compatible with both Node and Bun runtimes)
+const dilaraHash = bcrypt.hashSync('password123', 10)
+const kasunHash = bcrypt.hashSync('kasun', 10)
+const adminHash = bcrypt.hashSync('admin', 10)
 
 const seed = `
 INSERT INTO users (id, username, password, role, full_name, nic, email) VALUES
@@ -64,7 +63,6 @@ INSERT INTO users (id, username, password, role, full_name, nic, email) VALUES
   (2, 'kasun', '${kasunHash}', 'customer', 'Kasun Wickramanayake', '199812345678', 'kasun@example.test'),
   (3, 'admin', '${adminHash}', 'admin', 'Platform Administrator', '000000000000', 'root@example.test')
 ON CONFLICT (id) DO NOTHING;
-
 
 INSERT INTO accounts (user_id, account_number, account_name, balance, pin) VALUES
   (1, '1000003423', 'Dilara Savings', 100000.00, '1234'),
@@ -80,14 +78,24 @@ INSERT INTO transactions (from_account, to_account, amount, description, created
 ON CONFLICT DO NOTHING;
 `
 
-export async function runQuery<T = any>(sql: string, params: any[] = []) {
+/**
+ * Parameterized query — always use this for user-facing data.
+ * Returns the rows array directly.
+ */
+export async function runQuery<T = any>(text: string, params: any[] = []): Promise<T[]> {
   await ensureDatabase()
-  return pool.query(sql, params)
+  console.log('[bank-sql]', text, params)
+  const result = await pool.query(text, params)
+  return result.rows as T[]
 }
 
+/**
+ * Raw statement (no params). Only use for trusted/internal SQL.
+ * @deprecated — prefer runQuery with parameterized queries
+ */
 export async function runStatement(sql: string) {
-  // kept for backward compatibility while refactoring
   await ensureDatabase()
+  console.log('[bank-sql]', sql)
   return pool.query(sql)
 }
 
@@ -104,6 +112,7 @@ export function asText(value: unknown) {
 }
 
 export function serviceFailure(reason: unknown) {
+  console.error('[service-failure]', reason)
   return Response.json(
     {
       ok: false,

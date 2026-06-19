@@ -18,24 +18,47 @@ export default function SessionGuard({ children }: { children: React.ReactNode }
   ]
 
   useEffect(() => {
-    const checkSession = () => {
+    let mounted = true
+
+    const checkSession = async () => {
       const isProtected = protectedRoutes.some((route) => pathname?.startsWith(route))
       if (!isProtected) {
-        setAuthorized(true)
+        if (mounted) setAuthorized(true)
         return
       }
 
-      // Check localStorage for basic user presence
-      const user = localStorage.getItem('user')
-      if (!user) {
+      // Fast path: localStorage may already have user
+      const cached = typeof window !== 'undefined' && localStorage.getItem('user')
+      if (cached) {
+        if (mounted) setAuthorized(true)
+        return
+      }
+
+      // Verify server-side session via API (sends httpOnly cookie)
+      try {
+        const res = await fetch('/api/auth/session')
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.user) {
+            localStorage.setItem('user', JSON.stringify(json.user))
+            if (mounted) setAuthorized(true)
+            return
+          }
+        }
+      } catch (e) {
+        console.error('SessionGuard: session check failed', e)
+      }
+
+      if (mounted) {
         setAuthorized(false)
         router.push('/login')
-      } else {
-        setAuthorized(true)
       }
     }
 
     checkSession()
+    return () => {
+      mounted = false
+    }
   }, [pathname, router])
 
   if (!authorized && protectedRoutes.some((route) => pathname?.startsWith(route))) {

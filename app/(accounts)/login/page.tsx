@@ -46,24 +46,29 @@ export default function LoginPage() {
         aria-label="Nova Bank shell artwork"
         className="relative hidden w-[46.2%] shrink-0 overflow-hidden bg-[#1d0730] md:block"
       >
-        <img
-          src="/loginshellbg.png"
-          alt=""
-          className="size-full object-cover"
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -left-20 -top-20 w-[420px] h-[420px] rounded-full bg-gradient-to-tr from-[#6b0f66] to-[#b886b6] opacity-80 animate-float" aria-hidden="true" />
+          <div className="absolute right-[-60px] bottom-[-40px] w-[360px] h-[360px] rounded-full bg-gradient-to-br from-[#3b0b3b] to-[#7a2a6a] opacity-60 blur-2xl animate-float" aria-hidden="true" />
 
-        <div className="absolute inset-0 flex items-center justify-center">
           <img
-            src="/loginlogo.png"
-            alt="Nova Bank"
-            className="w-[38%] max-w-[276px]"
+            src="/loginshellbg.png"
+            alt="Nova Bank shell background"
+            className="size-full object-cover"
+            aria-hidden="true"
           />
+
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img
+              src="/loginlogo.png"
+              alt="Nova Bank"
+              className="w-[38%] max-w-[276px] animate-scale-in"
+            />
+          </div>
         </div>
       </aside>
 
-      <div className="flex flex-1 items-center justify-center bg-white px-8 py-10">
-        <form onSubmit={handleSubmit} className="w-full max-w-[450px] text-center">
+      <div className="flex flex-1 items-center justify-center bg-white px-8 py-10 animate-fade-in-up">
+        <form onSubmit={handleSubmit} className="w-full max-w-[450px] text-center animate-scale-in">
           <h1 className="mb-8 text-[2.45rem] font-bold text-black text-balance">
             LOGIN
           </h1>
@@ -123,7 +128,7 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <AuthButton className="mt-8" disabled={loading}>
+          <AuthButton type="submit" className="mt-8" disabled={loading}>
             {loading ? 'SIGNING IN...' : 'SIGN IN'}
           </AuthButton>
 
