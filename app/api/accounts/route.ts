@@ -10,8 +10,6 @@ export async function GET(request: Request) {
 
     const userId = session.userId
 
-    // Only allow fetching accounts belonging to the authenticated user.
-    // Explicitly exclude the 'pin' column from the select to prevent leaks.
     const sql = `
       SELECT a.id, a.user_id, a.account_number, a.account_name, a.balance, u.username, u.full_name
       FROM accounts a
@@ -33,23 +31,26 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => ({}))
-    const userId = asText(body.userId || '1')
-    const accountNumber = asText(body.accountNumber)
-    const accountName = asText(body.accountName)
-    const balance = 0
-
-    if (!accountNumber || !accountName) {
-      throw new Error("Missing required fields")
+    const session = await getAuthenticatedSession()
+    if (!session) {
+      return Response.json({ ok: false, message: 'Unauthorized.' }, { status: 401 })
     }
 
-    const inserted = await runStatement(`
-      INSERT INTO accounts (user_id, account_number, account_name, balance, pin)
-      VALUES (${userId}, '${accountNumber}', '${accountName}', ${balance}, '1234')
-      RETURNING *
-    `)
+    const body = await request.json().catch(() => ({}))
+    const accountNumber = String(body.accountNumber || '').trim()
+    const accountName = String(body.accountName || '').trim()
 
-    return Response.json({ ok: true, account: inserted.rows[0] })
+    if (!accountNumber || !accountName) {
+      return Response.json({ ok: false, message: 'Missing required fields.' }, { status: 400 })
+    }
+
+    const inserted = await runQuery(
+      `INSERT INTO accounts (user_id, account_number, account_name, balance, pin)
+       VALUES ($1, $2, $3, 0, '1234') RETURNING *`,
+      [session.userId, accountNumber, accountName]
+    )
+
+    return Response.json({ ok: true, account: inserted[0] })
   } catch (reason) {
     return serviceFailure(reason)
   }
@@ -57,22 +58,31 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const body = await request.json().catch(() => ({}))
-    const accountNumber = asText(body.accountNumber)
-    const accountName = asText(body.accountName)
-
-    if (!accountNumber || !accountName) {
-      throw new Error("Missing required fields")
+    const session = await getAuthenticatedSession()
+    if (!session) {
+      return Response.json({ ok: false, message: 'Unauthorized.' }, { status: 401 })
     }
 
-    const updated = await runStatement(`
-      UPDATE accounts
-      SET account_name = '${accountName}'
-      WHERE account_number = '${accountNumber}'
-      RETURNING *
-    `)
+    const body = await request.json().catch(() => ({}))
+    const accountNumber = String(body.accountNumber || '').trim()
+    const accountName = String(body.accountName || '').trim()
 
-    return Response.json({ ok: true, account: updated.rows[0] })
+    if (!accountNumber || !accountName) {
+      return Response.json({ ok: false, message: 'Missing required fields.' }, { status: 400 })
+    }
+
+    const updated = await runQuery(
+      `UPDATE accounts SET account_name = $1
+       WHERE account_number = $2 AND user_id = $3
+       RETURNING *`,
+      [accountName, accountNumber, session.userId]
+    )
+
+    if (updated.length === 0) {
+      return Response.json({ ok: false, message: 'Account not found or unauthorized.' }, { status: 404 })
+    }
+
+    return Response.json({ ok: true, account: updated[0] })
   } catch (reason) {
     return serviceFailure(reason)
   }
@@ -80,17 +90,26 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const accountNumber = asText(searchParams.get('accountNumber'))
-
-    if (!accountNumber) {
-      throw new Error("Missing account number")
+    const session = await getAuthenticatedSession()
+    if (!session) {
+      return Response.json({ ok: false, message: 'Unauthorized.' }, { status: 401 })
     }
 
-    await runStatement(`
-      DELETE FROM accounts
-      WHERE account_number = '${accountNumber}'
-    `)
+    const { searchParams } = new URL(request.url)
+    const accountNumber = searchParams.get('accountNumber') || ''
+
+    if (!accountNumber) {
+      return Response.json({ ok: false, message: 'Missing account number.' }, { status: 400 })
+    }
+
+    const deleted = await runQuery(
+      `DELETE FROM accounts WHERE account_number = $1 AND user_id = $2 RETURNING id`,
+      [accountNumber, session.userId]
+    )
+
+    if (deleted.length === 0) {
+      return Response.json({ ok: false, message: 'Account not found or unauthorized.' }, { status: 404 })
+    }
 
     return Response.json({ ok: true })
   } catch (reason) {
