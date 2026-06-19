@@ -49,9 +49,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Create JWT
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || 'super_secret_jwt_key_for_hackathon'
-    )
+    const secretValue = process.env.JWT_SECRET
+    if (!secretValue) {
+      return NextResponse.json(
+        { ok: false, message: 'Server authentication is not configured.' },
+        { status: 500 }
+      )
+    }
+
+    const secret = new TextEncoder().encode(secretValue)
     
     const alg = 'HS256'
     
