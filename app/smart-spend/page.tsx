@@ -49,8 +49,11 @@ export default function SmartSpendPage() {
         </header>
 
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-gray-500 animate-pulse">Loading analytics...</div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+            <div className="bg-gray-200 p-6 rounded-2xl shadow-sm h-72 animate-pulse"></div>
+            <div className="bg-gray-200 p-6 rounded-2xl shadow-sm h-72 animate-pulse"></div>
+            <div className="bg-gray-200 p-6 rounded-2xl shadow-sm h-40 animate-pulse"></div>
+            <div className="bg-gray-200 p-6 rounded-2xl shadow-sm h-40 animate-pulse"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
