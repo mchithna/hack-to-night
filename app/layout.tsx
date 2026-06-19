@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   description: 'Manage your finances with Smart Spend'
 }
 
+import SessionGuard from '@/components/SessionGuard'
+
 export default function RootLayout({
   children
 }: Readonly<{
@@ -33,7 +35,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${bai.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SessionGuard>{children}</SessionGuard>
+      </body>
     </html>
   )
 }

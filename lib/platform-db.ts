@@ -91,6 +91,13 @@ export async function runStatement(sql: string) {
   return pool.query(sql)
 }
 
+export async function runQuery<T = any>(text: string, params?: any[]) {
+  await ensureDatabase()
+  console.log('[bank-sql]', text, params)
+  const result = await pool.query(text, params)
+  return result.rows as T[]
+}
+
 export async function ensureDatabase() {
   if (booted) return
   await pool.query(schema)
