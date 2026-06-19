@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Sidebar from '../../components/sidebar'
 import {
@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   ChevronLeft
 } from '../../components/Icons'
+import { Toaster, toast } from 'react-hot-toast'
 
 type Biller = {
   id: string
@@ -34,15 +35,18 @@ const billers: Biller[] = [
 
 type Screen = 'select' | 'form' | 'success' | 'failed'
 
-const MOCK_BALANCE = 5000
-
 type FormErrors = {
+  fromAccount?: string
   accountNumber?: string
   billId?: string
   dueAmount?: string
 }
 
 export default function PayBillsPage() {
+  const [accounts, setAccounts] = useState<{account_number: string, account_name: string, balance: number}[]>([])
+  const [fromAccount, setFromAccount] = useState('')
+  const [loadingAccounts, setLoadingAccounts] = useState(true)
+
   const [screen, setScreen] = useState<Screen>('select')
   const [selectedBiller, setSelectedBiller] = useState<Biller | null>(null)
   const [accountNumber, setAccountNumber] = useState('')
@@ -53,6 +57,26 @@ export default function PayBillsPage() {
   const [failReason, setFailReason] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
 
+  useEffect(() => {
+    async function fetchAccounts() {
+      try {
+        const res = await fetch('/api/accounts')
+        if (res.ok) {
+          const data = await res.json()
+          setAccounts(data.accounts || [])
+          if (data.accounts && data.accounts.length > 0) {
+            setFromAccount(data.accounts[0].account_number)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load accounts', err)
+      } finally {
+        setLoadingAccounts(false)
+      }
+    }
+    fetchAccounts()
+  }, [])
+
   function handleSelectBiller(biller: Biller) {
     setSelectedBiller(biller)
     setErrors({})
@@ -61,6 +85,10 @@ export default function PayBillsPage() {
 
   function validateForm(): boolean {
     const newErrors: FormErrors = {}
+
+    if (!fromAccount) {
+      newErrors.fromAccount = 'Source account is required'
+    }
 
     if (!accountNumber.trim()) {
       newErrors.accountNumber = 'Account number is required'
@@ -80,6 +108,11 @@ export default function PayBillsPage() {
       const amount = Number(dueAmount)
       if (Number.isNaN(amount) || amount <= 0) {
         newErrors.dueAmount = 'Enter a valid amount greater than 0'
+      } else {
+        const selectedAcc = accounts.find(a => a.account_number === fromAccount)
+        if (selectedAcc && amount > Number(selectedAcc.balance)) {
+          newErrors.dueAmount = 'Insufficient balance in selected account'
+        }
       }
     }
 
@@ -87,24 +120,43 @@ export default function PayBillsPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  function handlePayNow() {
+  async function handlePayNow() {
     if (!validateForm()) {
       return
     }
 
-    const amount = Number(dueAmount)
+    const loadToast = toast.loading("Processing payment...")
 
-    if (amount > MOCK_BALANCE) {
-      setFailReason(
-        `Insufficient Balance\nCurrent Balance is: Rs.${MOCK_BALANCE}`
-      )
+    try {
+      const res = await fetch('/api/bills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromAccount,
+          billerId: selectedBiller?.id,
+          amount: dueAmount,
+          remarks
+        })
+      })
+
+      const data = await res.json()
+      toast.dismiss(loadToast)
+
+      if (res.ok) {
+        setConfirmationNumber(data.transaction?.id || Math.floor(10000000 + Math.random() * 90000000).toString())
+        setScreen('success')
+        toast.success("Payment successful!")
+      } else {
+        setFailReason(data.error || data.message || "Failed to process payment")
+        setScreen('failed')
+        toast.error("Payment failed")
+      }
+    } catch (err) {
+      toast.dismiss(loadToast)
+      setFailReason("Network error occurred. Please try again.")
       setScreen('failed')
-      return
+      toast.error("Network error")
     }
-
-    const confNum = Math.floor(10000000 + Math.random() * 90000000).toString()
-    setConfirmationNumber(confNum)
-    setScreen('success')
   }
 
   function resetToHome() {
@@ -115,10 +167,17 @@ export default function PayBillsPage() {
     setDueAmount('')
     setRemarks('')
     setErrors({})
+    // Refetch accounts to update balance
+    setLoadingAccounts(true)
+    fetch('/api/accounts').then(res => res.json()).then(data => {
+      setAccounts(data.accounts || [])
+      setLoadingAccounts(false)
+    }).catch(() => setLoadingAccounts(false))
   }
 
   return (
     <div className="page">
+      <Toaster position="top-right" />
       <Sidebar />
 
       <div className="content">
@@ -151,12 +210,13 @@ export default function PayBillsPage() {
                       className="biller-btn"
                     >
                       <div className="biller-icon logo-circle">
-                        <Image
+                        <img
                           src={biller.logo}
                           alt={biller.name}
                           width={44}
                           height={44}
                           style={{ objectFit: 'contain' }}
+                          onError={(e) => { e.currentTarget.src = '/person-logo.png' }}
                         />
                       </div>
                       <span className="biller-name">{biller.name}</span>
@@ -178,17 +238,37 @@ export default function PayBillsPage() {
 
                 <div className="biller-header">
                   <div className="biller-icon small logo-circle">
-                    <Image
+                    <img
                       src={selectedBiller.logo}
                       alt={selectedBiller.name}
                       width={28}
                       height={28}
                       style={{ objectFit: 'contain' }}
+                      onError={(e) => { e.currentTarget.src = '/person-logo.png' }}
                     />
                   </div>
                   <span className="biller-header-name">
                     {selectedBiller.name}
                   </span>
+                </div>
+
+                <div className="field">
+                  <label>Pay from Account</label>
+                  <select
+                    value={fromAccount}
+                    onChange={(e) => setFromAccount(e.target.value)}
+                    className={errors.fromAccount ? 'input-error' : ''}
+                    disabled={loadingAccounts}
+                  >
+                    {loadingAccounts ? <option>Loading...</option> : accounts.map(a => (
+                      <option key={a.account_number} value={a.account_number}>
+                        {a.account_number} - Rs. {Number(a.balance).toLocaleString()} ({a.account_name})
+                      </option>
+                    ))}
+                  </select>
+                  {errors.fromAccount && (
+                    <span className="error-text">{errors.fromAccount}</span>
+                  )}
                 </div>
 
                 <div className="field">
@@ -267,11 +347,11 @@ export default function PayBillsPage() {
                 <div className="status-circle failed">
                   <AlertTriangle size={64} />
                 </div>
-                <h2>Payment Failed!</h2>
-                <p className="status-sub">{failReason}</p>
-                <button className="back-home-btn" onClick={resetToHome}>
+                <h2 className="mt-4 mb-2">Payment Failed!</h2>
+                <p className="status-sub text-red-600 font-medium">{failReason}</p>
+                <button className="back-home-btn" onClick={() => setScreen('form')}>
                   <ChevronLeft size={16} />
-                  BACK TO HOME
+                  TRY AGAIN
                 </button>
               </div>
             )}
@@ -413,7 +493,7 @@ export default function PayBillsPage() {
           color: #666;
           font-weight: 500;
         }
-        .field input {
+        .field input, .field select {
           background: #f3f4f6;
           border: 1.5px solid transparent;
           border-radius: 12px;
@@ -423,10 +503,10 @@ export default function PayBillsPage() {
           outline: none;
           transition: box-shadow 0.15s, border-color 0.15s;
         }
-        .field input:focus {
+        .field input:focus, .field select:focus {
           box-shadow: 0 0 0 2px #d8b9d6;
         }
-        .field input.input-error {
+        .field input.input-error, .field select.input-error {
           border-color: #ef4444;
           background: #fef2f2;
         }

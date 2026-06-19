@@ -51,12 +51,20 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 `
 
+// @ts-ignore
+const dilaraHash = Bun.password.hashSync('password123')
+// @ts-ignore
+const kasunHash = Bun.password.hashSync('kasun')
+// @ts-ignore
+const adminHash = Bun.password.hashSync('admin')
+
 const seed = `
 INSERT INTO users (id, username, password, role, full_name, nic, email) VALUES
-  (1, 'dilara', 'password123', 'customer', 'Dilara Perera', '200112345678', 'dilara@example.test'),
-  (2, 'kasun', 'kasun', 'customer', 'Kasun Wickramanayake', '199812345678', 'kasun@example.test'),
-  (3, 'admin', 'admin', 'admin', 'Platform Administrator', '000000000000', 'root@example.test')
+  (1, 'dilara', '${dilaraHash}', 'customer', 'Dilara Perera', '200112345678', 'dilara@example.test'),
+  (2, 'kasun', '${kasunHash}', 'customer', 'Kasun Wickramanayake', '199812345678', 'kasun@example.test'),
+  (3, 'admin', '${adminHash}', 'admin', 'Platform Administrator', '000000000000', 'root@example.test')
 ON CONFLICT (id) DO NOTHING;
+
 
 INSERT INTO accounts (user_id, account_number, account_name, balance, pin) VALUES
   (1, '1000003423', 'Dilara Savings', 100000.00, '1234'),
@@ -72,9 +80,14 @@ INSERT INTO transactions (from_account, to_account, amount, description, created
 ON CONFLICT DO NOTHING;
 `
 
-export async function runStatement(sql: string) {
+export async function runQuery<T = any>(sql: string, params: any[] = []) {
   await ensureDatabase()
-  console.log('[bank-sql]', sql)
+  return pool.query(sql, params)
+}
+
+export async function runStatement(sql: string) {
+  // kept for backward compatibility while refactoring
+  await ensureDatabase()
   return pool.query(sql)
 }
 
@@ -98,21 +111,10 @@ export function asText(value: unknown) {
 }
 
 export function serviceFailure(reason: unknown) {
-  const issue = reason as {
-    message?: string
-    code?: string
-    detail?: string
-    stack?: string
-  }
-
   return Response.json(
     {
       ok: false,
-      message: issue.message,
-      code: issue.code,
-      detail: issue.detail,
-      trace: issue.stack,
-      databaseUrl: connectionString
+      message: 'Internal Server Error'
     },
     { status: 500 }
   )
