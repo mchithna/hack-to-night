@@ -160,7 +160,13 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <Settings size={24} />
         <HelpCircle size={24} />
-        <button onClick={handleLogout} className="logout-button" title="Log Out">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="logout-button"
+          aria-label="Log out"
+          title="Log Out"
+        >
           <LogOut size={24} />
         </button>
       </div>
