@@ -31,7 +31,11 @@ export async function POST(req: NextRequest) {
 
     // Verify password, fallback for seed plain text passwords
     let isMatch = false
-    if (user.password.startsWith('$2b$') || user.password.startsWith('$2a$')) {
+    if (
+      user.password.startsWith('$2b$') ||
+      user.password.startsWith('$2a$') ||
+      user.password.startsWith('$2y$')
+    ) {
       isMatch = await bcrypt.compare(password, user.password)
     } else {
       isMatch = password === user.password
