@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Sidebar from '@/components/sidebar'
 import { Search, Bell } from '@/components/Icons'
-import styles from './accounts.module.css'
 import { Toaster, toast } from 'react-hot-toast'
 
 type Screen = 'list' | 'add' | 'edit'
@@ -208,113 +207,185 @@ function AccountsContent() {
   }
 
   return (
-    <main className={styles.accountsPage}>
+    <div className="min-h-screen bg-bg-light font-geist p-0 overflow-x-hidden">
       <Toaster position="top-right" />
-      <Sidebar />
-      <section className={styles.content}>
-        {screen === 'list' && (
-          <>
-            <header className={styles.contentHeader}>
-              <h1 className={styles.pageTitle}>Accounts</h1>
-              <div className={styles.headerActions}>
-                <Search size={22} />
-                <Bell size={22} />
-                <div className={styles.avatarPlaceholder}>
-                  <Image src="/person-logo.png" alt="Profile" width={40} height={40} style={{ objectFit: 'cover', borderRadius: '50%' }} />
+      <div className="flex min-h-screen">
+        <div className="z-50 relative"><Sidebar /></div>
+        <main className="flex-1 p-6 md:p-12 text-black relative">
+          
+          {screen === 'list' && (
+            <div className="animate-fade-in-up">
+              <div className="mb-8 flex items-center justify-between animate-fade-in-down">
+                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-[#9a5c97]">
+                  Bank Accounts
+                </h2>
+                <div className="flex items-center gap-6 text-gray-500">
+                  <Search size={22} className="cursor-pointer hover:text-purple-700 transition-colors" />
+                  <Bell size={22} className="cursor-pointer hover:text-purple-700 transition-colors" />
+                  <div className="w-11 h-11 rounded-full bg-white border-2 border-white/50 shadow-md overflow-hidden hover-lift cursor-pointer">
+                    <Image src="/person-logo.png" alt="Profile" width={44} height={44} className="object-cover" />
+                  </div>
                 </div>
               </div>
-            </header>
 
-            <div className={styles.cardsContainer}>
-              {loading ? (
-                <div className="text-gray-500">Loading accounts...</div>
-              ) : accounts.length > 0 ? (
-                accounts.map(acc => (
-                  <div key={acc.account_number} className={styles.accountCard}>
-                    <div className={styles.iconEdit} onClick={() => router.push(`/bank-accounts?mode=edit&accountNumber=${acc.account_number}&accountName=${encodeURIComponent(acc.account_name)}`)}>
-                      ✏️
-                    </div>
-                    <div className={styles.iconDelete} onClick={() => handleDeleteAccount(acc.account_number)}>🗑️</div>
-                    <div className={styles.accountCardContent}>
-                      <h2 className={styles.accountName}>{acc.account_name}</h2>
-                      <div className={styles.accountAvatar}>
-                        <Image src="/account-logo.png" alt="profile" width={100} height={100} style={{ objectFit: 'cover', borderRadius: '50%' }} />
+              {/* Banner */}
+              <div className="w-full relative rounded-3xl overflow-hidden mb-8 shadow-[0_10px_40px_rgba(154,92,151,0.2)] animate-fade-in-up stagger-1 h-[220px]">
+                <Image 
+                  src="/accounts-banner.png" 
+                  alt="Accounts Banner" 
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-900/60 to-transparent flex items-center p-10">
+                  <div className="text-white">
+                    <h1 className="text-4xl font-bold mb-2">Your Vault</h1>
+                    <p className="text-white/80">Manage your connected bank accounts and cards securely.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up stagger-2">
+                {loading ? (
+                  <div className="text-gray-500 font-medium">Loading accounts...</div>
+                ) : accounts.length > 0 ? (
+                  accounts.map((acc, index) => (
+                    <div key={acc.account_number} className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_10px_40px_rgba(154,92,151,0.15)] rounded-3xl p-6 hover-lift relative group transition-all" style={{ animationDelay: `${index * 0.1 + 0.2}s` }}>
+                      <div className="absolute top-4 right-4 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => router.push(`/bank-accounts?mode=edit&accountNumber=${acc.account_number}&accountName=${encodeURIComponent(acc.account_name)}`)}
+                          className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center hover:bg-purple-200 transition-colors shadow-sm"
+                          title="Edit Nickname"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteAccount(acc.account_number)}
+                          className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200 transition-colors shadow-sm"
+                          title="Delete Account"
+                        >
+                          🗑️
+                        </button>
                       </div>
-                      <p className={styles.accountDetails}>
-                        Nova Bank <br />
-                        {acc.account_number}
-                      </p>
+                      <div className="flex flex-col items-center text-center mt-2">
+                        <div className="w-24 h-24 rounded-full bg-white shadow-md border-4 border-white mb-4 overflow-hidden relative">
+                          <Image src="/account-logo.png" alt="bank" fill className="object-cover" />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800 mb-1">{acc.account_name}</h2>
+                        <p className="text-gray-500 text-sm mb-4">Nova Bank • {acc.account_number}</p>
+                        <div className="w-full bg-purple-50 rounded-2xl py-3 px-4 mt-2">
+                          <span className="text-xs font-semibold text-purple-600 uppercase tracking-widest block mb-1">Balance</span>
+                          <span className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-[#9a5c97]">
+                            Rs. {acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 w-full col-span-2">No accounts found. Add one below!</p>
-              )}
+                  ))
+                ) : (
+                  <p className="text-gray-500 w-full col-span-full font-medium">No accounts found. Add one below!</p>
+                )}
 
-              <button className={styles.addAccountCard} onClick={goToAdd}>
-                <h2 className={styles.addAccountTitle}>Add a Bank Account</h2>
-                <div className={styles.addAccountIcon}>+</div>
-              </button>
+                <button onClick={goToAdd} className="bg-white/40 backdrop-blur-sm border-2 border-dashed border-purple-300 shadow-sm rounded-3xl p-6 hover-lift flex flex-col items-center justify-center min-h-[280px] text-purple-600 hover:bg-white/60 hover:border-purple-400 transition-all group">
+                  <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform shadow-sm">+</div>
+                  <h2 className="text-lg font-bold">Add a Bank Account</h2>
+                  <p className="text-sm text-purple-500/80 mt-2">Link another external account</p>
+                </button>
+              </div>
             </div>
-          </>
-        )}
+          )}
 
-        {screen === 'add' && (
-          <>
-            <header className={styles.contentHeader}>
-              <h1 className={styles.pageTitle}>Add Account</h1>
-            </header>
-            <div className={styles.formContainer}>
-              <div className={styles.formCard}>
-                <h2 className={styles.formTitle}>Add Another Bank Account</h2>
-                <form className={styles.formFields} onSubmit={handleAddAccount}>
-                  <div className={styles.formGroup}>
-                    <label>Bank Account Number:</label>
-                    <input name="accountNumber" value={formData.accountNumber} onChange={handleChange} placeholder="Enter account number" className={errors.accountNumber ? styles.inputError : ''} />
-                    {errors.accountNumber && <span className={styles.fieldError}>{errors.accountNumber}</span>}
+          {screen === 'add' && (
+            <div className="animate-fade-in-up">
+              <div className="mb-8 flex items-center justify-between animate-fade-in-down">
+                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-[#9a5c97]">
+                  Add Account
+                </h2>
+              </div>
+              
+              <div className="max-w-2xl mx-auto mt-12 bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_10px_40px_rgba(154,92,151,0.15)] rounded-3xl p-8 hover-lift animate-fade-in-up stagger-1">
+                <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">Link Another Bank Account</h2>
+                <form onSubmit={handleAddAccount} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bank Account Number</label>
+                    <input 
+                      name="accountNumber" 
+                      value={formData.accountNumber} 
+                      onChange={handleChange} 
+                      placeholder="Enter 8-20 digit account number" 
+                      className={`w-full bg-gray-50/50 border ${errors.accountNumber ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-purple-400 focus:ring-purple-200'} rounded-xl px-4 py-3 text-gray-800 outline-none transition-all focus:ring-4`} 
+                    />
+                    {errors.accountNumber && <span className="text-red-500 text-xs mt-1 block">{errors.accountNumber}</span>}
                   </div>
-                  <div className={styles.formGroup}>
-                    <label>Account Name (Nickname):</label>
-                    <input name="accountName" value={formData.accountName} onChange={handleChange} placeholder="Enter account holder name" className={errors.accountName ? styles.inputError : ''} />
-                    {errors.accountName && <span className={styles.fieldError}>{errors.accountName}</span>}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Account Name (Nickname)</label>
+                    <input 
+                      name="accountName" 
+                      value={formData.accountName} 
+                      onChange={handleChange} 
+                      placeholder="e.g. My Savings" 
+                      className={`w-full bg-gray-50/50 border ${errors.accountName ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-purple-400 focus:ring-purple-200'} rounded-xl px-4 py-3 text-gray-800 outline-none transition-all focus:ring-4`} 
+                    />
+                    {errors.accountName && <span className="text-red-500 text-xs mt-1 block">{errors.accountName}</span>}
                   </div>
-                  <div className={styles.formActionsBottom}>
-                    <button type="button" className={styles.btnCancel} onClick={goToList}>Cancel</button>
-                    <button type="submit" className={styles.btnAdd}>Add Account</button>
+                  <div className="flex gap-4 pt-6">
+                    <button type="button" onClick={goToList} className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+                      Cancel
+                    </button>
+                    <button type="submit" className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-800 to-[#9a5c97] hover:from-purple-900 hover:to-purple-800 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                      Add Account
+                    </button>
                   </div>
                 </form>
               </div>
             </div>
-          </>
-        )}
+          )}
 
-        {screen === 'edit' && (
-          <>
-            <header className={styles.contentHeader}>
-              <h1 className={styles.pageTitle}>Edit Account</h1>
-            </header>
-            <div className={styles.formContainer}>
-              <div className={styles.formCard}>
-                <h2 className={styles.formTitle}>Edit the account name</h2>
-                <form onSubmit={handleEditNickname} className={styles.formFields}>
-                  <div className={styles.formGroup}>
-                    <label>Bank Account Number:</label>
-                    <input type="text" value={formData.accountNumber} disabled className={styles.inputDisabled} />
+          {screen === 'edit' && (
+            <div className="animate-fade-in-up">
+              <div className="mb-8 flex items-center justify-between animate-fade-in-down">
+                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-[#9a5c97]">
+                  Edit Account
+                </h2>
+              </div>
+              
+              <div className="max-w-2xl mx-auto mt-12 bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_10px_40px_rgba(154,92,151,0.15)] rounded-3xl p-8 hover-lift animate-fade-in-up stagger-1">
+                <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">Edit Account Nickname</h2>
+                <form onSubmit={handleEditNickname} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Bank Account Number</label>
+                    <input 
+                      type="text" 
+                      value={formData.accountNumber} 
+                      disabled 
+                      className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-gray-500 cursor-not-allowed" 
+                    />
                   </div>
-                  <div className={styles.formGroup}>
-                    <label>Account Name:</label>
-                    <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Enter new nickname" required />
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Account Name</label>
+                    <input 
+                      type="text" 
+                      value={nickname} 
+                      onChange={(e) => setNickname(e.target.value)} 
+                      placeholder="Enter new nickname" 
+                      required 
+                      className="w-full bg-gray-50/50 border border-gray-200 focus:border-purple-400 focus:ring-purple-200 rounded-xl px-4 py-3 text-gray-800 outline-none transition-all focus:ring-4" 
+                    />
                   </div>
-                  <div className={styles.formActionsBottom}>
-                    <button type="button" className={styles.btnCancel} onClick={goToList}>Cancel</button>
-                    <button type="submit" className={styles.btnUpdate}>UPDATE</button>
+                  <div className="flex gap-4 pt-6">
+                    <button type="button" onClick={goToList} className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+                      Cancel
+                    </button>
+                    <button type="submit" className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-800 to-[#9a5c97] hover:from-purple-900 hover:to-purple-800 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                      Update Account
+                    </button>
                   </div>
                 </form>
               </div>
             </div>
-          </>
-        )}
-      </section>
-    </main>
+          )}
+        </main>
+      </div>
+    </div>
   )
 }
