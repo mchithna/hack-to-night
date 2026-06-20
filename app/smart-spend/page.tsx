@@ -98,21 +98,42 @@ export default function SmartSpendPage() {
     : 0
 
   return (
-    <main className="flex flex-col md:flex-row min-h-screen bg-[#F8F9FA]">
-      <Sidebar />
+    <div className="min-h-screen bg-bg-light font-geist p-0 overflow-x-hidden">
+      <div className="flex min-h-screen">
+        <div className="z-50 relative"><Sidebar /></div>
 
-      <section className="flex-1 p-6 md:p-10 overflow-y-auto page-transition">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-10 animate-fade-in-down">
-          <h1 className="text-3xl font-bold text-gray-800">Smart Spend</h1>
-          <div className="flex items-center gap-6 text-gray-500">
-            <Search size={22} className="cursor-pointer hover:text-gray-700 transition-colors" />
-            <Bell size={22} className="cursor-pointer hover:text-gray-700 transition-colors" />
-            <div className="w-10 h-10 rounded-full bg-gray-300 overflow-hidden shadow-sm">
-              <Image src="/person-logo.png" alt="Profile" width={40} height={40} className="object-cover" />
+        <main className="flex-1 p-6 md:p-12 text-black relative">
+          
+          {/* Header */}
+          <div className="mb-8 flex items-center justify-between animate-fade-in-down">
+            <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-900 to-[#9a5c97]">
+              Smart Spend
+            </h2>
+            <div className="flex items-center gap-6 text-gray-500">
+              <Search size={22} className="cursor-pointer hover:text-purple-700 transition-colors" />
+              <Bell size={22} className="cursor-pointer hover:text-purple-700 transition-colors" />
+              <div className="w-11 h-11 rounded-full bg-white border-2 border-white/50 shadow-md overflow-hidden hover-lift cursor-pointer">
+                <Image src="/person-logo.png" alt="Profile" width={44} height={44} className="object-cover" />
+              </div>
             </div>
           </div>
-        </header>
+
+          {/* Banner */}
+          <div className="w-full relative rounded-3xl overflow-hidden mb-12 shadow-[0_10px_40px_rgba(154,92,151,0.2)] animate-fade-in-up stagger-1 h-[220px]">
+            <Image 
+              src="/spend-banner.png" 
+              alt="Smart Spend Banner" 
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/60 to-transparent flex items-center p-10">
+              <div className="text-white">
+                <h1 className="text-4xl font-bold mb-2">Track Your Finances</h1>
+                <p className="text-white/80">Analyze your spending, set goals, and save intelligently.</p>
+              </div>
+            </div>
+          </div>
 
         {/* Skeleton Loading State */}
         {loading ? (
@@ -122,9 +143,9 @@ export default function SmartSpendPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in-up stagger-2">
             {/* ─── Spend by Category (Donut Chart) ─── */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover-lift animate-fade-in-up stagger-1">
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-[0_10px_40px_rgba(154,92,151,0.15)] border border-white/40 hover-lift relative overflow-hidden group animate-fade-in-up stagger-1">
               <h2 className="text-xl font-bold mb-6 text-gray-800">Spend by Category</h2>
               {analytics && <DonutChart categories={analytics.categories} total={analytics.totalSpend} />}
 
@@ -150,7 +171,7 @@ export default function SmartSpendPage() {
             </div>
 
             {/* ─── Monthly Progress ─── */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover-lift animate-fade-in-up stagger-2">
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-[0_10px_40px_rgba(154,92,151,0.15)] border border-white/40 hover-lift relative overflow-hidden group animate-fade-in-up stagger-2">
               <h2 className="text-xl font-bold mb-6 text-gray-800">Monthly Progress</h2>
               <div className="flex flex-col items-center justify-center h-56 bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 rounded-2xl border border-indigo-100/50 relative overflow-hidden">
                 {/* Decorative circles */}
@@ -179,7 +200,7 @@ export default function SmartSpendPage() {
             </div>
 
             {/* ─── Savings Goals ─── */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover-lift animate-fade-in-up stagger-3">
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-[0_10px_40px_rgba(154,92,151,0.15)] border border-white/40 hover-lift relative overflow-hidden group animate-fade-in-up stagger-3">
               <h2 className="text-xl font-bold mb-6 text-gray-800">Savings Goals</h2>
               <div className="p-6 border border-gray-100 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50">
                 <div className="flex items-center justify-between mb-4">
@@ -212,7 +233,7 @@ export default function SmartSpendPage() {
             </div>
 
             {/* ─── Spend Alerts ─── */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover-lift animate-fade-in-up stagger-4">
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-[0_10px_40px_rgba(154,92,151,0.15)] border border-white/40 hover-lift relative overflow-hidden group animate-fade-in-up stagger-4">
               <h2 className="text-xl font-bold mb-6 text-gray-800">Spend Alerts</h2>
               <div className="space-y-4">
                 {analytics?.spendAlerts.map((alert, i) => (
@@ -261,7 +282,8 @@ export default function SmartSpendPage() {
             </div>
           </div>
         )}
-      </section>
-    </main>
+        </main>
+      </div>
+    </div>
   )
 }
